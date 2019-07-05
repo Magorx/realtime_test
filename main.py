@@ -321,7 +321,7 @@ def main():
     w = World('GameWorld', WINDOW_WIDTH, WINDOW_HEIGHT)
     u = Unit(w, 'kawak', WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, 32, 32, 0, 10, 2, './textures/kawak_green.png', is_player=True)
     w.objects.append(u)
-    u = Unit(w, 'kawak', WINDOW_WIDTH // 4, WINDOW_HEIGHT // 4, 128, 128, 0, 10, 2, './textures/plurt_red.png')
+    u = Unit(w, 'kawak', WINDOW_WIDTH // 4, WINDOW_HEIGHT // 4, 32, 32, 0, 10, 2, './textures/plurt_red.png')
     w.objects.append(u)
     cnt = 0
     while True:
