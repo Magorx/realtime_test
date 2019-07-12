@@ -13,9 +13,25 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(file_path)
 clock = pygame.time.Clock()
 
+# SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS ---
 
-WINDOW_WIDTH = 500
-WINDOW_HEIGHT = 500
+WINDOW_WIDTH = 1600
+WINDOW_HEIGHT = 850
+
+SHIP_SIZE = 64
+SHIP_SPEED = 5
+
+BULLET_SIZE = 20
+BULLET_SPEED = 10
+
+# SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS --- SETTINGS ---
+
+
+def load_image(path, width, height, to_scale=True):
+    if to_scale:
+        return pygame.transform.scale(pygame.image.load(path), (width, height))
+    else:
+        return pygame.image.load(path)
 
 
 def rotate_image(image, angle):
@@ -136,6 +152,8 @@ class World:
                 pos = pygame.mouse.get_pos()
                 pl.pos.center = Vector(pos[0], pos[1])
                 pl.goal_targeting_mode = True
+            if event.type == pygame.QUIT:
+                pygame.quit()
             
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
@@ -184,18 +202,19 @@ class Weapon:
         y = spawn_pos.y
         # im super cool
 
-        bullet = Projectile(self.world, 'bullet', x, y, 10, 10, angle + self.shift_angle, self.dmg, self.bullet_spd*3, './textures/bullet.png', owner=self.owner)
+        bullet = Projectile(self.world, 'bullet', x, y, BULLET_SIZE, BULLET_SIZE, angle + self.shift_angle, self.dmg, self.bullet_spd*3, './textures/bullet.png', owner=self.owner)
         self.world.objects.append(bullet)
 
 
 class Unit:
-    def __init__(self, world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode=False, is_player=False, is_drawable=True):
+    def __init__(self, world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode=False, is_player=False, is_drawable=True, owner=None, to_scale_texture=True):
         self.world = world
         self.name = name
         self.width = width
         self.height = height
         self.angle = angle
-        self.texture = pygame.transform.scale(pygame.image.load(texture), (width, height))
+        self.texture = load_image(texture, width, height, to_scale=to_scale_texture)
+        self.owner = self if owner is None else owner
 
         self.hp = hp
         self.spd = spd
@@ -215,9 +234,9 @@ class Unit:
         self.is_player = is_player
         self.is_drawable = is_drawable
 
-        self.weapons = [Weapon(world, self, self.hp//5, self.spd*2, 2),
-                        Weapon(world, self, self.hp//5, self.spd*2, 2, 10, +10, -10),
-                        Weapon(world, self, self.hp//5, self.spd*2, 2, 10, -10, +10)]
+        self.weapons = [Weapon(world, self, self.hp//5, BULLET_SPEED, 1),
+                        Weapon(world, self, self.hp//5, BULLET_SPEED, 1, 10, +10, -10),
+                        Weapon(world, self, self.hp//5, BULLET_SPEED, 1, 10, -10, +10)]
 
     def move_tick(self, to_cancel_cur_spd=False):
         self.pos += self.cur_spd
@@ -225,6 +244,7 @@ class Unit:
         self.pos.y = self.pos.y
 
         self.angle = degrees(self.cur_spd.angle(Vector(0, -1)))
+        print(self.angle, self.cur_spd)
         if self.cur_spd.x > 0:
             self.angle *= -1
 
@@ -294,8 +314,8 @@ class Unit:
 
 
 class Projectile(Unit):
-    def __init__(self, world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode=False, is_player=False, is_drawable=True, owner=None):
-        super(Projectile, self).__init__(world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode, is_player, is_drawable)
+    def __init__(self, world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode=False, is_player=False, is_drawable=True, owner=None, to_scale_texture=True):
+        super(Projectile, self).__init__(world, name, x, y, width, height, angle, hp, spd, texture, goal_targeting_mode, is_player, is_drawable, owner, to_scale_texture)
         self.cur_spd = Vector(0, -1).rotated(angle) * spd
         self.owner = owner
 
@@ -310,7 +330,7 @@ class Projectile(Unit):
 
         for obj in self.world.objects:
             if self.collides(obj):
-                if obj is self or obj is self.owner:
+                if obj.owner is self.owner:
                     pass
                 else:
                     obj.apply_dmg(self.hp)
@@ -319,9 +339,9 @@ class Projectile(Unit):
 
 def main():
     w = World('GameWorld', WINDOW_WIDTH, WINDOW_HEIGHT)
-    u = Unit(w, 'kawak', WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, 32, 32, 0, 10, 2, './textures/kawak_green.png', is_player=True)
+    u = Unit(w, 'kawak', WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, SHIP_SIZE, SHIP_SIZE, 0, 10, SHIP_SPEED, './textures/kawak_green.png', is_player=True)
     w.objects.append(u)
-    u = Unit(w, 'kawak', WINDOW_WIDTH // 4, WINDOW_HEIGHT // 4, 32, 32, 0, 10, 2, './textures/plurt_red.png')
+    u = Unit(w, 'kawak', WINDOW_WIDTH // 4, WINDOW_HEIGHT // 4, SHIP_SIZE, SHIP_SIZE, 0, 10, SHIP_SPEED, './textures/plurt_red.png')
     w.objects.append(u)
     cnt = 0
     while True:
